@@ -5,6 +5,7 @@
   <style>
     body {
       margin: 0px;
+      padding:  0px;
       overflow: hidden;
     }
   </style>
@@ -27,14 +28,32 @@
 
   uniform float time;
   uniform vec2 resolution;
+  uniform sampler2D img;
   void main() {
+    // st is position relative to origin at center
+    // range is -0.5 to 0.5 in the shorter side
+    // longer side overflows as necessary
+    vec2 st = (gl_FragCoord.xy - resolution.xy*0.5)/min(resolution.x, resolution.y);
+    //scale up st so range is -1 to 1
+    // ie, a square in the middle of screen, -1 to 1
+    st *= 2.;
 
-    vec2 st = (gl_FragCoord.xy - resolution.xy*0.5)/resolution.xx;
+    // since st's range goes from -1 to 1, 
+    // and querying image at [-1,-1] makes no sense,
+    // convert coords back to 0,1 for querying image
+    vec2 imgCoords = st*0.5 + 0.5;
+    vec4 imgCol = texture2D(img, imgCoords);
+
+    // since we don't know if the image and screen have the same aspect ratio,
+    // we could still be querying the image at < vec2(0) or > vec2(1)
+    vec2 bounds = step(0.,imgCoords) * (1. - step(1.000001, imgCoords));
+    // bounds is a 2d vec, need to 'flatten' it to use it as a boolean
+    // inBounds is true only if bounds is true on both dimensions
+    float inBounds = bounds.x * bounds.y;
+    // multiple only the rgb components, so the alpha value is retained
+    imgCol.rgb *= inBounds;
     
-    float x = mod(time*0.25 + 10.*st.x, 20.) < 10. ? 1. : 0.;
-    float y = mod(time*0.25 + 10.*st.y, 20.) < 10. ? 1. : 0.;
-    
-    gl_FragColor = vec4(vec3(abs(x+y)), 1.);
+    gl_FragColor = imgCol;
 
   }
 
@@ -57,13 +76,16 @@
 
 
   function init() {
+    var imgTexture = THREE.ImageUtils.loadTexture( "cat.jpg" );
     container = document.getElementById( 'container' );
     camera = new THREE.Camera();
     camera.position.z = 1;
     scene = new THREE.Scene();
     uniforms = {
       time: { type: "f", value: 1.0 },
-      resolution: { type: "v2", value: new THREE.Vector2() }
+      resolution: { type: "v2", value: new THREE.Vector2() },
+      img: { type: "t", value: imgTexture},
+      imgResolution: {type: "v2", value: new THREE.Vector2(imgTexture.image.width,imgTexture.image.height)}
     };
     material = new THREE.ShaderMaterial( {
       uniforms: uniforms,
@@ -77,6 +99,8 @@
     uniforms.resolution.value.x = window.innerWidth;
     uniforms.resolution.value.y = window.innerHeight;
     renderer.setSize( window.innerWidth, window.innerHeight );
+    console.log(window.innerWidth);
+    console.log(window.innerHeight);
   }
 
 
