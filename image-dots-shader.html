@@ -44,19 +44,25 @@
     vec2 imgCoords = st*0.5 + 0.5;
     
 
-    vec2 psize = vec2(0.01);
-    vec2 cent = psize;
-    cent.x *= (sin(time*0.1)*0.3 + .5);
-    cent.y *= (cos(time*0.1)*0.3 + .5);
+    vec2 psize = vec2(0.035);
+    vec2 cent = 0.5 * psize;
 
-    vec2 dotCoords = imgCoords - mod(imgCoords, psize);
-    dotCoords += cent;
+    vec2 dotCent = imgCoords - mod(imgCoords, psize);
+    dotCent += cent;
 
-    float d = distance(imgCoords, dotCoords);
+    vec2 idx = floor(imgCoords / psize) ;
+
+    float a = sin(time*0.05 + (idx.x+idx.y)) * 0.3 + 0.8;
+    float b = cos(time*0.05 + (idx.x+idx.y)) * 0.3 + 0.8;
+
+    // ellipse
+    float d = pow( pow((imgCoords.x - dotCent.x)/a, 2.) + pow((imgCoords.y - dotCent.y)/b, 2.), 0.5);
+    
     vec2 circ = step(d, 0.4*psize);
     float inCirc = circ.x*circ.y;
 
-    vec4 imgCol = texture2D(img, dotCoords);
+    vec4 imgCol = texture2D(img, dotCent);
+
     imgCol.rgb *= inCirc;
 
 
