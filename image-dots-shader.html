@@ -42,7 +42,23 @@
     // and querying image at [-1,-1] makes no sense,
     // convert coords back to 0,1 for querying image
     vec2 imgCoords = st*0.5 + 0.5;
-    vec4 imgCol = texture2D(img, imgCoords);
+    
+
+    vec2 psize = vec2(0.01);
+    vec2 cent = psize;
+    cent.x *= (sin(time*0.1)*0.3 + .5);
+    cent.y *= (cos(time*0.1)*0.3 + .5);
+
+    vec2 dotCoords = imgCoords - mod(imgCoords, psize);
+    dotCoords += cent;
+
+    float d = distance(imgCoords, dotCoords);
+    vec2 circ = step(d, 0.4*psize);
+    float inCirc = circ.x*circ.y;
+
+    vec4 imgCol = texture2D(img, dotCoords);
+    imgCol.rgb *= inCirc;
+
 
     // since we don't know if the image and screen have the same aspect ratio,
     // we could still be querying the image at < vec2(0) or > vec2(1)
