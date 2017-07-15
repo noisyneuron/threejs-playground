@@ -52,11 +52,15 @@
     float swirl_radius = PI/2.;
     float swirl_amt = 1.;
 
-    // st *= mix(1., 1.2, mod(time*0.01, 10.));
+    float modtime = mod(time*0.04, 10.)/10.;
 
+    st *= mat2(cos(modtime*2.), -sin(modtime*2.),
+              sin(modtime*2.), cos(modtime*2.));
+
+    st *= mix(1., 4., pow(modtime,2.));
     float f_rad = st.x*st.x + st.y*st.y;
-    st *= mix(1., 0.1, mod(time*0.02, 10.));
-    swirl_radius = mix(PI/2., f_rad, mod(time*0.02, 10.));
+    
+    swirl_radius = mix(PI/2., f_rad, modtime);
     // swirl_amt += time*10.00;
     vec2 imgCoords = swirl(st, swirl_radius, swirl_amt);
     imgCoords = imgCoords*0.5 + 0.5;
@@ -64,7 +68,9 @@
 
     vec2 inBounds = step(0., imgCoords) * 1. - step(1.00001, imgCoords);
 
+    imgCol.rgb -= pow(modtime,2.);
     imgCol.rgb *= inBounds.x*inBounds.y;
+
 
 
     // imgCol.a -= (time*0.02) / 10.;
